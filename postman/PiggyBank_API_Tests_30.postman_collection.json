@@ -1,0 +1,907 @@
+{
+  "info": {
+    "name": "PiggyBank API Tests - 30 testcases",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "30 API-testcases. Sommige verwachtingen zijn aannames, zie requestbeschrijvingen. POST verandert gegevens: alleen gebruiken op lokale testdatabase. Rood kan een gevonden backendfout betekenen."
+  },
+  "item": [
+    {
+      "name": "TC01 - Rekeningen ophalen",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "1"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/accounts",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC01: verwacht HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC02 - Zonder gebruikersheader",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/accounts",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC02: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC03 - Ongeldige gebruikersheader",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "abc"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/accounts",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC03: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC04 - Negatief gebruikersnummer",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "-1"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/accounts",
+        "description": "Status niet eerder bevestigd. Controleer verwacht gedrag."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC04: verwacht HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC05 - Onbekend gebruikersnummer",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "999999"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/accounts",
+        "description": "Status niet eerder bevestigd. Controleer verwacht gedrag."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC05: verwacht HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC06 - Bestaande rekening",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/accounts/1",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC06: verwacht HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('ID is 1', () => pm.expect(pm.response.json().id).to.eql(1));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC07 - Niet bestaande rekening",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/accounts/999999",
+        "description": "Status niet eerder expliciet bevestigd."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC07: verwacht HTTP 404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC08 - Ongeldig rekeningnummer",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/accounts/abc",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC08: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC09 - Geldige overboeking",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC09 geldig\",\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC09: verwacht HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC10 - Onvoldoende saldo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "Verwacht afwijzing indien rood staan verboden is. Deze request kan saldo veranderen als de bug nog bestaat.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC10 te hoog\",\n  \"amount\": 200000,\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC10: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC11 - Negatief bedrag",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC11 negatief\",\n  \"amount\": -10,\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC11: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC12 - Nulbedrag",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC12 nul\",\n  \"amount\": 0,\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC12: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC13 - Eigen rekening",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "Alleen een bug indien eigen overboekingen verboden zijn.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 1,\n  \"description\": \"TC13 eigen\",\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC13: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC14 - Onbekende ontvanger",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "404 is ook een geldige afwijzing; 500 is ongewenst.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 999999,\n  \"description\": \"TC14 ontvanger\",\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC14: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC15 - Onbekende verzender",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 999999,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC15 verzender\",\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC15: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC16 - Negatief verzendernummer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": -1,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC16 negatief id\",\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC16: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC17 - Bedrag ontbreekt",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC17 zonder bedrag\",\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC17: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC18 - Bedrag is tekst",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC18 tekst\",\n  \"amount\": \"abc\",\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC18: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC19 - Ongeldige valuta",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC19 valuta\",\n  \"amount\": 10,\n  \"currency\": \"XYZ\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC19: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC20 - Valuta ontbreekt",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "Afhankelijk van requirement: is valuta verplicht?",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC20 zonder valuta\",\n  \"amount\": 10\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC20: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC21 - Omschrijving ontbreekt",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "Afhankelijk van requirement: is omschrijving verplicht?",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC21: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC22 - Verzender ontbreekt",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"receiverAccountId\": 2,\n  \"description\": \"Test\",\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC22: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC23 - Ontvanger ontbreekt",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions",
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"senderAccountId\": 1,\n  \"description\": \"Test\",\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC23: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC24 - Limiet drie",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/transactions/1?limit=3",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC24: verwacht HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Maximaal drie', () => pm.expect(pm.response.json().transactions.length).to.be.at.most(3));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC25 - Negatieve limiet",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/transactions/1?limit=-1",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC25: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC26 - Limiet nul",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/transactions/1?limit=0",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC26: verwacht HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Leeg', () => pm.expect(pm.response.json().transactions).to.be.empty);"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC27 - Limiet tekst",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/transactions/1?limit=abc",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC27: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC28 - Transacties onbekende rekening",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/transactions/999999",
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC28: verwacht HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Lege lijst', () => pm.expect(pm.response.json().transactions).to.be.empty);"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC29 - Rekeningnaam wijzigen",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/accounts",
+        "description": "Na PUT controleren met GET /api/v1/accounts/1 of de naam werkelijk is veranderd. Eerder 400 en naam ongewijzigd.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"accountId\": 1,\n  \"accountName\": \"Rekening van Melvin Test\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC29: verwacht HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "TC30 - Lege rekeningnaam",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/accounts",
+        "description": "Eerder 200: mogelijke validatiebug.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"accountId\": 1,\n  \"accountName\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC30: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ]
+}
