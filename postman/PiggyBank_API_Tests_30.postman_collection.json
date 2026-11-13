@@ -2,7 +2,7 @@
   "info": {
     "name": "PiggyBank API Tests - 30 testcases",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "30 API-testcases. Sommige verwachtingen zijn aannames, zie requestbeschrijvingen. POST verandert gegevens: alleen gebruiken op lokale testdatabase. Rood kan een gevonden backendfout betekenen."
+    "description": "30 API-testcases voor PiggyBank. Bij TC01 t/m TC08 worden passende statuscodes en de response-inhoud gecontroleerd. TC29 controleert met een extra GET of de rekeningnaam echt verandert. TC30 controleert of een lege naam wordt geweigerd en of de oorspronkelijke naam behouden blijft. LET OP: TC09 t/m TC23 bevatten POST-verzoeken die de lokale testdatabase kunnen veranderen. TC10 kan bij een backendfout 200.000 afboeken. Voer niet zomaar de hele collectie uit. De verwachte antwoorden komen waar mogelijk uit het testplan en de backendcode; de actuele testresultaten horen in het testrapport."
   },
   "item": [
     {
@@ -16,7 +16,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/accounts",
-        "description": ""
+        "description": "Geldige X-User-Id 1: HTTP 200 en een niet-lege accounts-lijst. De frontend verwacht het veld accounts."
       },
       "event": [
         {
@@ -24,7 +24,13 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC01: verwacht HTTP 200', () => pm.response.to.have.status(200));"
+              "pm.test('TC01: geldige gebruiker geeft 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  pm.test('TC01: antwoord bevat een lijst met rekeningen', () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.accounts).to.be.an('array').that.is.not.empty;",
+              "  });",
+              "}"
             ]
           }
         }
@@ -37,7 +43,7 @@
         "method": "GET",
         "header": [],
         "url": "{{baseUrl}}/api/v1/accounts",
-        "description": ""
+        "description": "Geen X-User-Id: afwijzing met HTTP 400, niet een gewone geslaagde rekeninglijst."
       },
       "event": [
         {
@@ -45,7 +51,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC02: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+              "pm.test('TC02: ontbrekende gebruikersheader geeft 400', () => pm.response.to.have.status(400));"
             ]
           }
         }
@@ -63,7 +69,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/accounts",
-        "description": ""
+        "description": "X-User-Id abc is geen geldig getal: verwacht HTTP 400."
       },
       "event": [
         {
@@ -71,7 +77,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC03: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+              "pm.test('TC03: tekst als gebruikers-ID geeft 400', () => pm.response.to.have.status(400));"
             ]
           }
         }
@@ -89,7 +95,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/accounts",
-        "description": "Status niet eerder bevestigd. Controleer verwacht gedrag."
+        "description": "X-User-Id -1. In AccountController wordt het ID als long gelezen en de rekeninglijst opgehaald, zonder check op negatieve waarden. De huidige API geeft daarom 200 met accounts: []. Dat is hier de verwachte bestaande werking; een 400 bij negatieve IDs is een mogelijk verbeterpunt, geen bevestigde eis."
       },
       "event": [
         {
@@ -97,7 +103,13 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC04: verwacht HTTP 200', () => pm.response.to.have.status(200));"
+              "pm.test('TC04: onbekende gebruiker geeft 200 volgens huidige API', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  pm.test('TC04: negatieve ID levert geen rekeninggegevens op', () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.accounts).to.be.an('array').that.is.empty;",
+              "  });",
+              "}"
             ]
           }
         }
@@ -115,7 +127,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/accounts",
-        "description": "Status niet eerder bevestigd. Controleer verwacht gedrag."
+        "description": "X-User-Id 999999. Volgens de huidige getAccounts-implementatie resulteert een gebruiker zonder rekeningen in 200 met accounts: []. Deze test controleert beide; niet alleen de HTTP-status."
       },
       "event": [
         {
@@ -123,7 +135,13 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC05: verwacht HTTP 200', () => pm.response.to.have.status(200));"
+              "pm.test('TC05: onbekende gebruiker geeft volgens huidige API 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  pm.test('TC05: onbekende gebruiker ziet geen rekeningen', () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.accounts).to.be.an('array').that.is.empty;",
+              "  });",
+              "}"
             ]
           }
         }
@@ -136,7 +154,7 @@
         "method": "GET",
         "header": [],
         "url": "{{baseUrl}}/api/v1/accounts/1",
-        "description": ""
+        "description": "Bestaande rekening 1: HTTP 200 en id 1."
       },
       "event": [
         {
@@ -144,8 +162,10 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC06: verwacht HTTP 200', () => pm.response.to.have.status(200));",
-              "pm.test('ID is 1', () => pm.expect(pm.response.json().id).to.eql(1));"
+              "pm.test('TC06: bestaande rekening geeft 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  pm.test('TC06: rekeningnummer is 1', () => pm.expect(pm.response.json().id).to.eql(1));",
+              "}"
             ]
           }
         }
@@ -158,7 +178,7 @@
         "method": "GET",
         "header": [],
         "url": "{{baseUrl}}/api/v1/accounts/999999",
-        "description": "Status niet eerder expliciet bevestigd."
+        "description": "Onbekend rekeningnummer 999999: verwacht HTTP 404; geen bestaand rekeningobject."
       },
       "event": [
         {
@@ -166,7 +186,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC07: verwacht HTTP 404', () => pm.response.to.have.status(404));"
+              "pm.test('TC07: onbekende rekening geeft 404', () => pm.response.to.have.status(404));"
             ]
           }
         }
@@ -179,7 +199,7 @@
         "method": "GET",
         "header": [],
         "url": "{{baseUrl}}/api/v1/accounts/abc",
-        "description": ""
+        "description": "Rekening-ID abc is geen getal: verwacht HTTP 400."
       },
       "event": [
         {
@@ -187,7 +207,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC08: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+              "pm.test('TC08: tekst als rekeningnummer geeft 400', () => pm.response.to.have.status(400));"
             ]
           }
         }
@@ -205,7 +225,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/transactions",
-        "description": "",
+        "description": "Een normale overboeking van 10 euro. Deze request controleert automatisch alleen HTTP 200. Controleer voor volledige verificatie saldo van afzender en ontvanger VOOR en NA de overboeking. Dit verzoek verandert de database.",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC09 geldig\",\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
@@ -345,7 +365,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/transactions",
-        "description": "Alleen een bug indien eigen overboekingen verboden zijn.",
+        "description": "Requirement nog onduidelijk: overboeken naar dezelfde rekening. Test verwacht voorlopig 400, maar een 200 is niet automatisch een bewezen bug.",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 1,\n  \"description\": \"TC13 eigen\",\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
@@ -380,7 +400,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/transactions",
-        "description": "404 is ook een geldige afwijzing; 500 is ongewenst.",
+        "description": "Onbekende rekening: verwacht een clientfout (400 of 404), nooit een serverfout 500.",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 999999,\n  \"description\": \"TC14 ontvanger\",\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
@@ -397,7 +417,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC14: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+              "pm.test('TC14: onbekende rekening wordt netjes afgewezen (400 of 404)', () => pm.expect([400, 404]).to.include(pm.response.code));"
             ]
           }
         }
@@ -415,7 +435,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/transactions",
-        "description": "",
+        "description": "Onbekende rekening: verwacht een clientfout (400 of 404), nooit een serverfout 500.",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"senderAccountId\": 999999,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC15 verzender\",\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
@@ -432,7 +452,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC15: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+              "pm.test('TC15: onbekende rekening wordt netjes afgewezen (400 of 404)', () => pm.expect([400, 404]).to.include(pm.response.code));"
             ]
           }
         }
@@ -590,7 +610,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/transactions",
-        "description": "Afhankelijk van requirement: is valuta verplicht?",
+        "description": "Requirement nog onduidelijk: is valuta verplicht? Test verwacht voorlopig 400; vergelijk met API-afspraken.",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"description\": \"TC20 zonder valuta\",\n  \"amount\": 10\n}",
@@ -625,7 +645,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/transactions",
-        "description": "Afhankelijk van requirement: is omschrijving verplicht?",
+        "description": "Userstory 4 staat overboeken zonder omschrijving toe. Verwacht HTTP 200 als de transactie verder geldig is; dit verzoek verandert de testdatabase.",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"senderAccountId\": 1,\n  \"receiverAccountId\": 2,\n  \"amount\": 10,\n  \"currency\": \"EURO\"\n}",
@@ -642,7 +662,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC21: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+              "pm.test('TC21: omschrijving mag ontbreken (HTTP 200)', () => pm.response.to.have.status(200));"
             ]
           }
         }
@@ -838,7 +858,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/accounts",
-        "description": "Na PUT controleren met GET /api/v1/accounts/1 of de naam werkelijk is veranderd. Eerder 400 en naam ongewijzigd.",
+        "description": "Wijzig de naam van rekening 1. Een HTTP 200 alleen is niet genoeg: na PUT doet Postman automatisch GET /api/v1/accounts/1 en controleert of name precies \"Rekening van Melvin Test\" is. In de huidige backend bevat AccountController.updateAccount een TODO en wordt niets opgeslagen; de naamscontrole zal daarom mislukken. Dat is een gevonden implementatiefout.",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"accountId\": 1,\n  \"accountName\": \"Rekening van Melvin Test\"\n}",
@@ -855,7 +875,23 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC29: verwacht HTTP 200', () => pm.response.to.have.status(200));"
+              "pm.test('TC29: PUT geeft HTTP 200', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  pm.sendRequest({",
+              "    url: pm.variables.get('baseUrl') + '/api/v1/accounts/1',",
+              "    method: 'GET'",
+              "  }, function (err, res) {",
+              "    pm.test('TC29: GET na PUT werkt', function () {",
+              "      pm.expect(err).to.equal(null);",
+              "      pm.expect(res.code).to.equal(200);",
+              "    });",
+              "    if (!err && res.code === 200) {",
+              "      pm.test('TC29: rekeningnaam is echt aangepast', function () {",
+              "        pm.expect(res.json().name).to.equal('Rekening van Melvin Test');",
+              "      });",
+              "    }",
+              "  });",
+              "}"
             ]
           }
         }
@@ -873,7 +909,7 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/accounts",
-        "description": "Eerder 200: mogelijke validatiebug.",
+        "description": "Probeer rekening 1 een lege naam te geven. De verwachte afwijzing is 400, gebaseerd op de bedoeling van het testscenario en de @NotEmpty-annotatie in UpdateAccountRequest. Postman leest de naam voor en na de PUT om te controleren dat deze niet verandert. De huidige backend geeft 200 terug en voert geen wijziging uit; dus de HTTP-statustest faalt en de controle op ongewijzigde naam slaagt. Beide resultaten zijn relevant.",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"accountId\": 1,\n  \"accountName\": \"\"\n}",
@@ -886,11 +922,48 @@
       },
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.sendRequest({",
+              "  url: pm.variables.get('baseUrl') + '/api/v1/accounts/1',",
+              "  method: 'GET'",
+              "}, function (err, res) {",
+              "  if (!err && res.code === 200) {",
+              "    pm.variables.set('tc30_previous_name', res.json().name);",
+              "  } else {",
+              "    pm.variables.unset('tc30_previous_name');",
+              "  }",
+              "});"
+            ]
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('TC30: verwacht HTTP 400', () => pm.response.to.have.status(400));"
+              "pm.test('TC30: lege naam moet 400 geven', () => pm.response.to.have.status(400));",
+              "pm.sendRequest({",
+              "  url: pm.variables.get('baseUrl') + '/api/v1/accounts/1',",
+              "  method: 'GET'",
+              "}, function (err, res) {",
+              "  pm.test('TC30: rekening is nog op te halen', function () {",
+              "    pm.expect(err).to.equal(null);",
+              "    pm.expect(res.code).to.equal(200);",
+              "  });",
+              "  if (!err && res.code === 200) {",
+              "    pm.test('TC30: rekeningnaam is niet leeg gemaakt', function () {",
+              "      pm.expect(res.json().name).to.be.a('string').that.is.not.empty;",
+              "    });",
+              "    pm.test('TC30: rekeningnaam is ongewijzigd', function () {",
+              "      const oldName = pm.variables.get('tc30_previous_name');",
+              "      pm.expect(oldName, 'Naam van voor de PUT ontbreekt').to.be.a('string');",
+              "      pm.expect(res.json().name).to.equal(oldName);",
+              "    });",
+              "  }",
+              "});"
             ]
           }
         }
